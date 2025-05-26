@@ -40,27 +40,39 @@ class KonversiSuhuScreen extends StatefulWidget {
 
 class _KonversiSuhuScreenState extends State<KonversiSuhuScreen> {
   final TextEditingController _controller = TextEditingController();
-
+  String _satuanAwal = 'Celsius';
+  double _celcius = 0;
   double _fahrenheit = 0;
   double _kelvin = 0;
 
   void _konversiSuhu() {
     final input = double.tryParse(_controller.text);
-
-    if (input != null) {
-      setState(() {
-        _fahrenheit = (input * 9 / 5) + 32;
-        _kelvin = input + 273.15;
-      });
-    } else {
-      setState(() {
-        _fahrenheit = 0;
-        _kelvin = 0;
-      });
+    if (input == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Masukkan angka yang valid!')),
       );
+      return;
     }
+
+    setState(() {
+      switch (_satuanAwal) {
+        case 'Celsius':
+          _celcius = input;
+          _fahrenheit = (input * 9 / 5) + 32;
+          _kelvin = input + 273.15;
+          break;
+        case 'Fahrenheit':
+          _celcius = (input - 32) * 5 / 9;
+          _fahrenheit = input;
+          _kelvin = _celcius + 273.15;
+          break;
+        case 'Kelvin':
+          _celcius = input - 273.15;
+          _kelvin = input;
+          _fahrenheit = (_celcius * 9 / 5) + 32;
+          break;
+      }
+    });
   }
 
   @override
@@ -77,25 +89,36 @@ class _KonversiSuhuScreenState extends State<KonversiSuhuScreen> {
           children: [
             Icon(Icons.thermostat, size: 60, color: Colors.deepPurple),
             SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              value: _satuanAwal,
+              decoration: InputDecoration(
+                labelText: 'Pilih satuan suhu awal',
+                prefixIcon: Icon(Icons.thermostat_outlined),
+              ),
+              items: ['Celsius', 'Fahrenheit', 'Kelvin']
+                  .map((satuan) => DropdownMenuItem(
+                        value: satuan,
+                        child: Text(satuan),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _satuanAwal = value!;
+                });
+              },
+            ),
+            SizedBox(height: 20),
             TextField(
               controller: _controller,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'Masukkan suhu dalam Celsius',
+                labelText: 'Masukkan suhu ($_satuanAwal)',
                 prefixIcon: Icon(Icons.device_thermostat),
               ),
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _konversiSuhu,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple, // warna tombol
-                foregroundColor: Colors.white,      // warna teks
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
               child: Text(
                 'Konversi',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -120,6 +143,10 @@ class _KonversiSuhuScreenState extends State<KonversiSuhuScreen> {
                       ),
                     ),
                     SizedBox(height: 10),
+                    Text(
+                      'Celsius: ${_celcius.toStringAsFixed(2)} °C',
+                      style: TextStyle(fontSize: 16),
+                    ),
                     Text(
                       'Fahrenheit: ${_fahrenheit.toStringAsFixed(2)} °F',
                       style: TextStyle(fontSize: 16),
